@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ice Cream Parlor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Ice Cream Parlor</h1>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#cart">Cart</a>
+        </div>
+    </div>
+
+    <!-- Home Section -->
+    <div id="home" class="container">
+        <input type="text" placeholder="Search flavors..." class="search-bar" id="searchBar">
+        
+        <select id="seasonFilter" onchange="filterBySeason()">
+            <option value="">All Seasons</option>
+            <option value="Summer">Summer</option>
+            <option value="Fall">Fall</option>
+            <option value="Winter">Winter</option>
+            <option value="Spring">Spring</option>
+        </select>
+
+        <div class="flavor-grid" id="flavorGrid">
+            <!-- Flavor Cards will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Cart Section -->
+    <div id="cart" class="cart-container">
+        <h1>Your Cart</h1>
+        <div id="cartItems">
+            <!-- Cart items will be dynamically inserted here -->
+        </div>
+        <h2>Total Price: <span id="totalPrice">$0.00</span></h2>
+    </div>
+
+    <!-- Add Allergen Section -->
+    <div class="add-allergen-form">
+        <h2>Add New Allergen</h2>
+        <input type="text" id="allergenInput" placeholder="Add new allergen...">
+        <button onclick="addAllergen()">Add Allergen</button>
+    </div>
+
+    <!-- Suggest New Flavor Section -->
+    <div class="suggest-flavor-form">
+        <h2>Suggest a New Flavor</h2>
+        <input type="text" id="suggestedFlavor" placeholder="Enter flavor name">
+        <button onclick="suggestFlavor()">Submit</button>
+    </div>
+
+    <script>
+        // Example ice cream flavors with seasons and inventory
+        const flavors = [
+            { name: 'Mint Chocolate Chip', description: 'Refreshing mint with chocolate chips.', price: 4.50, season: 'Summer', inventory: 10 },
+            { name: 'Pumpkin Spice', description: 'Fall favorite pumpkin spice.', price: 4.50, season: 'Fall', inventory: 5 },
+            { name: 'Chocolate', description: 'Rich and creamy chocolate ice cream.', price: 4.00, season: 'All', inventory: 15 },
+            { name: 'Strawberry', description: 'Fresh strawberry ice cream.', price: 3.50, season: 'Spring', inventory: 8 },
+            { name: 'Vanilla', description: 'Classic vanilla ice cream.', price: 3.00, season: 'All', inventory: 12 }
+        ];
+
+        let cart = [];
+
+        // Render flavor cards
+        function renderFlavors(filteredFlavors) {
+            const flavorGrid = document.getElementById('flavorGrid');
+            flavorGrid.innerHTML = ''; // Clear existing cards
+
+            for (const flavor of filteredFlavors) {
+                const card = document.createElement('div');
+                card.classList.add('flavor-card');
+                card.innerHTML = `
+                    <h2>${flavor.name}</h2>
+                    <p>${flavor.description}</p>
+                    <p class="price">$${flavor.price.toFixed(2)}</p>
+                    <p>Inventory: ${flavor.inventory}</p>
+                    <button onclick="addToCart('${flavor.name}', ${flavor.price})" ${flavor.inventory === 0 ? 'disabled' : ''}>
+                        ${flavor.inventory === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </button>
+                `;
+                flavorGrid.appendChild(card);
+            }
+        }
+
+        // Add to cart
+        function addToCart(flavorName, price) {
+            const flavor = flavors.find(f => f.name === flavorName);
+            if (flavor.inventory > 0) {
+                cart.push({ flavorName, price });
+                flavor.inventory -= 1;
+                renderCart();
+                renderFlavors(flavors);
+            } else {
+                alert(`${flavorName} is out of stock.`);
+            }
+        }
+
+        // Render cart items
+        function renderCart() {
+            const cartItems = document.getElementById('cartItems');
+            const totalPriceElem = document.getElementById('totalPrice');
+            cartItems.innerHTML = '';
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                const cartItem = document.createElement('div');
+                cartItem.classList.add('cart-item');
+                cartItem.innerHTML = `
+                    <h2>${item.flavorName}</h2>
+                    <p>$${item.price.toFixed(2)}</p>
+                    <button onclick="removeFromCart(${index})">Remove</button>
+                `;
+                cartItems.appendChild(cartItem);
+                total += item.price;
+            });
+
+            totalPriceElem.textContent = `$${total.toFixed(2)}`;
+        }
+
+        // Remove item from cart
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        // Filter by season
+        function filterBySeason() {
+            const season = document.getElementById('seasonFilter').value;
+            const filteredFlavors = season
+                ? flavors.filter(flavor => flavor.season === season || flavor.season === 'All')
+                : flavors;
+            renderFlavors(filteredFlavors);
+        }
+
+        // Search flavors
+        document.getElementById('searchBar').addEventListener('input', function (event) {
+            const searchTerm = event.target.value.toLowerCase();
+            const filteredFlavors = flavors.filter(flavor => flavor.name.toLowerCase().includes(searchTerm));
+            renderFlavors(filteredFlavors);
+        });
+
+        // Add allergen
+        function addAllergen() {
+            const allergenInput = document.getElementById('allergenInput');
+            const allergen = allergenInput.value.trim();
+            if (allergen) {
+                alert(`Allergen "${allergen}" added!`);
+                allergenInput.value = '';
+            } else {
+                alert('Please enter a valid allergen.');
+            }
+        }
+
+        // Suggest new flavor
+function suggestFlavor() {
+    const suggestedFlavor = document.getElementById('suggestedFlavor').value.trim();
+    if (suggestedFlavor) {
+        alert(`Thank you for suggesting: ${suggestedFlavor}`);
+        document.getElementById('suggestedFlavor').value = '';
+    } else {
+        alert('Please enter a valid flavor name.');
+    }
+}
+
+
+        // Initial render
+        renderFlavors(flavors);
+    </script>
+</body>
+</html>
